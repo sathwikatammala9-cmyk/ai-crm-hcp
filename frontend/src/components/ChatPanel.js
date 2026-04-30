@@ -1,55 +1,46 @@
-import axios from "axios";
-import { useState } from "react";
+import React, { useState } from "react";
 
-export default function ChatPanel() {
-  const [input, setInput] = useState("");
-  const [reply, setReply] = useState("");
+const ChatPanel = () => {
+  const [message, setMessage] = useState("");
+  const [response, setResponse] = useState("");
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
-
     try {
-      const res = await axios.post("http://localhost:8000/chat", {
-        message: input
+      const res = await fetch("https://ai-crm-hcp-jmj4.onrender.com/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message }),
       });
-      setReply(res.data.reply);
-    } catch {
-      setReply("Error connecting to backend");
+
+      const data = await res.json();
+      setResponse(data.response || JSON.stringify(data));
+    } catch (error) {
+      console.error(error);
+      setResponse("Error connecting to backend");
     }
   };
 
   return (
-    <div className="chat-container">
+    <div style={{ padding: "10px" }}>
+      <h3>AI Assistant</h3>
 
-      {/* Header */}
-      <div className="chat-header">
-        <h3>AI Assistant</h3>
-        <p>Log Interaction via chat</p>
+      <textarea
+        placeholder="Describe interaction..."
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        style={{ width: "100%", height: "80px" }}
+      />
+
+      <button onClick={sendMessage}>Log</button>
+
+      <div style={{ marginTop: "10px" }}>
+        <strong>Response:</strong>
+        <p>{response}</p>
       </div>
-
-      {/* Chat Display Box */}
-      <div className="chat-box">
-        {reply ? (
-          <p>{reply}</p>
-        ) : (
-          <p className="placeholder">
-            Log interaction details here (e.g. “Met Dr. Smith discussed product…”)
-          </p>
-        )}
-      </div>
-
-      {/* Input Bar */}
-      <div className="chat-input">
-        <input
-          type="text"
-          placeholder="Describe Interaction..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-        />
-
-        <button onClick={sendMessage}>Log</button>
-      </div>
-
     </div>
   );
-}
+};
+
+export default ChatPanel;
