@@ -2,9 +2,15 @@ import React, { useState } from "react";
 
 const ChatPanel = () => {
   const [message, setMessage] = useState("");
-  const [response, setResponse] = useState("");
+  const [chat, setChat] = useState([]);
 
   const sendMessage = async () => {
+    if (!message) return;
+
+    // Add user message
+    const newChat = [...chat, { role: "user", text: message }];
+    setChat(newChat);
+
     try {
       const res = await fetch("https://ai-crm-hcp-jmj4.onrender.com/chat", {
         method: "POST",
@@ -15,30 +21,76 @@ const ChatPanel = () => {
       });
 
       const data = await res.json();
-      setResponse(data.response || JSON.stringify(data));
+
+      // Add bot response
+      setChat([
+        ...newChat,
+        {
+          role: "bot",
+          text: data.response || JSON.stringify(data),
+        },
+      ]);
     } catch (error) {
-      console.error(error);
-      setResponse("Error connecting to backend");
+      setChat([
+        ...newChat,
+        { role: "bot", text: "Error connecting to backend" },
+      ]);
     }
+
+    setMessage("");
   };
 
   return (
     <div style={{ padding: "10px" }}>
       <h3>AI Assistant</h3>
 
-      <textarea
-        placeholder="Describe interaction..."
+      {/* Chat Messages */}
+      <div
+        style={{
+          border: "1px solid #ccc",
+          height: "300px",
+          overflowY: "auto",
+          padding: "10px",
+          marginBottom: "10px",
+        }}
+      >
+        {chat.map((msg, index) => (
+          <div
+            key={index}
+            style={{
+              textAlign: msg.role === "user" ? "right" : "left",
+              margin: "5px 0",
+            }}
+          >
+            <span
+              style={{
+                background:
+                  msg.role === "user" ? "#007bff" : "#f1f1f1",
+                color: msg.role === "user" ? "white" : "black",
+                padding: "8px 12px",
+                borderRadius: "10px",
+                display: "inline-block",
+                maxWidth: "70%",
+              }}
+            >
+              {msg.text}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Input */}
+      <input
+        type="text"
+        placeholder="Describe Interaction..."
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        style={{ width: "100%", height: "80px" }}
+        style={{ width: "80%", padding: "8px" }}
       />
 
-      <button onClick={sendMessage}>Log</button>
-
-      <div style={{ marginTop: "10px" }}>
-        <strong>Response:</strong>
-        <p>{response}</p>
-      </div>
+      <button onClick={sendMessage} style={{ padding: "8px 12px" }}>
+        Send
+      </button>
     </div>
   );
 };
